@@ -29,6 +29,10 @@ public class FileService {
         }
     }
 
+    public boolean isFilenameAvailable(String filename) {
+        return fileMapper.getFileWithFilename(filename) == null;
+    }
+
     public File getFile(Integer fileid) {
         return fileMapper.getFile(fileid);
     }

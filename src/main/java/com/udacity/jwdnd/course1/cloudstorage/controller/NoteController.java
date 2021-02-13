@@ -36,14 +36,19 @@ public class NoteController {
             Integer noteid = noteForm.getNoteid();
             String notetitle = noteForm.getNotetitle();
             String notedescription = noteForm.getNotedescription();
-            if (noteid != null) {
-                noteid = noteService.update(new Note(noteid, notetitle, notedescription, null));
+            if (notedescription.length() <= 1000) {
+                if (noteid != null) {
+                    noteid = noteService.update(new Note(noteid, notetitle, notedescription, null));
+                } else {
+                    noteid = noteService.createNote(new Note(null, notetitle, notedescription, user.getUserid()));
+                }
+                if (noteid < 0) {
+                    resultError = "Failed to create note";
+                }
             } else {
-                noteid = noteService.createNote(new Note(null, notetitle, notedescription, user.getUserid()));
+                resultError = "Note can't be saved as description exceed 1000 character";
             }
-            if (noteid < 0) {
-                resultError = "Failed to create note";
-            }
+
         }
 
         if (resultError == null) {

@@ -12,11 +12,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping("/file")
-public class FileController {
+public class FileController implements HandlerExceptionResolver {
 
     private FileService fileService;
     private UserService userService;
@@ -55,9 +61,14 @@ public class FileController {
                     String filename = fileUpload.getOriginalFilename();
                     String contentType =  fileUpload.getContentType();
                     String filesize = String.valueOf(fileUpload.getSize());
-                    int result = fileService.saveFile(new File(null, filename, contentType, filesize, user.getUserid(), bytes));
-                    if (result < 0) {
-                        resultError = "Failed to save file";
+
+                    if (fileService.isFilenameAvailable(filename)) {
+                        int result = fileService.saveFile(new File(null, filename, contentType, filesize, user.getUserid(), bytes));
+                        if (result < 0) {
+                            resultError = "Failed to save file";
+                        }
+                    } else {
+                        resultError = "Filename already exists. Please upload with different file";
                     }
                 } else {
                     resultError = "No file uploaded";
@@ -91,5 +102,14 @@ public class FileController {
         }
 
         return "result";
+    }
+
+    @Override
+    public ModelAndView resolveException(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o, Exception e) {
+        ModelAndView modelAndView = new ModelAndView("result");
+        if (e instanceof MaxUploadSizeExceededException) {
+            modelAndView.getModel().put("resultError", "File size exceeds limit! (10MB)");
+        }
+        return modelAndView;
     }
 }
